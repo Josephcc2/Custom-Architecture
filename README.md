@@ -63,15 +63,11 @@ Defines the ordered list of `Layer` objects that make up the pipeline. All param
 | `recursive_depth` | int | `1` | How many additional layers follow this one in the loop group |
 | `conversation_output` | str | `None` | Shared conversation transcript file path (recursive groups only) |
 
-## Recursive Groups
-
-Set `recursive_loops > 1` on the **lead layer** to create a looping agent group. The group spans `recursive_depth + 1` layers (the lead plus the next `recursive_depth` layers). Each agent in the group reads the shared conversation transcript before responding, enabling multi-turn back-and-forth between agents.
-
 ## Layer Execution Modes
 
 - **Sequential** — `parallel_to_next_layer=False`: layer completes before the next begins
 - **Parallel** — `parallel_to_next_layer=True`: layer runs concurrently with the next using `ThreadPoolExecutor`
-- **Recursive group** — `recursive_loops > 1` on the lead layer: a group of agents loops N times, each reading the shared conversation transcript before responding. The group spans `recursive_depth + 1` layers (the lead + the next `recursive_depth` layers).
+- **Recursive group** — `recursive_loops > 1` on the lead layer: a group of agents loops 'n' times, each reading the shared conversation transcript before responding. The group spans `recursive_depth + 1` layers (the lead + the next `recursive_depth` layers).
 
 ## Running
 
