@@ -53,21 +53,21 @@ ai_models:
 Built-in support exists for `OpenAI`, `Anthropic`, and `xAI`. Support for other providers (e.g. Gemini) can be added in `clients.py`.
 
 ### `layers.py`
-Defines the ordered list of `Layer` objects that make up the pipeline. Edit this file to change what the agents do.
+Defines the ordered list of `Layer` objects that make up the pipeline. All parameters are keyword arguments:
 
 ### Layer Parameters
 
-| Parameter | Type | Description |
-|---|---|---|
-| `parallel_to_next_layer` | bool | If `True`, this layer runs concurrently with the next |
-| `model_number` | int | Index into `ai_models` in `config.yaml` |
-| `prompt` | str | The prompt sent to the model |
-| `output_destination` | str | File path where the response is saved |
-| `output_name` | str | Label written at the top of the output file |
-| `input_destinations` | list[str] | Optional files whose contents are appended to the prompt |
-| `recursive_loops` | int | How many times the loop group repeats (1 = no looping) |
-| `recursive_depth` | int | How many additional layers follow this one in the loop group |
-| `conversation_output` | str | Shared conversation transcript file (used by recursive groups) |
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `parallel_to_next_layer` | bool | — | If `True`, this layer runs concurrently with the next |
+| `model_number` | int | — | Index into `ai_models` in `config.yaml` |
+| `prompt` | str | — | The prompt sent to the model |
+| `output_destination` | str | — | File path where the response is saved |
+| `output_name` | str | — | Label written at the top of the output file |
+| `input_destinations` | list[str] | `[]` | Files whose contents are appended to the prompt |
+| `recursive_loops` | int | `1` | How many times the loop group repeats (1 = no looping) |
+| `recursive_depth` | int | `1` | How many additional layers follow this one in the loop group |
+| `conversation_output` | str | `None` | Shared conversation transcript file path (recursive groups only) |
 
 ## Recursive Groups
 
