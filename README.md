@@ -28,8 +28,13 @@ set XAI_API_KEY=your_api_key_here
 ```
 
 ## Customizing
-Layers can be edited in `main.py`
-LLMs can be modified in `config.yaml`
+Layers can be edited in `main.py`.
+
+Layers dictate the architecture for the agents.
+
+---
+LLMs can be modified in `config.yaml`.
+There is currently only built in support for ChatGPT, Claude, and Grok. This means that all of those models will work when put in the config file. Other models, such as Gemini, can be added through `clients.py`.
 
 ## Running the Project
-To run the project, run the `run_agents.bat` file
+To run the project, run the `run_agents.bat` file. Outputs can be found in the fiels that they were generated to.
