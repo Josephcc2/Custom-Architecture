@@ -1,6 +1,7 @@
 import os
 import yaml
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime
 
 from clients import PromptLayer
 from layers import layers
@@ -19,7 +20,11 @@ def save_output(index, response):
     os.makedirs(os.path.dirname(destination), exist_ok=True)
     with open(destination, "w", encoding="utf-8") as f:
         f.write(f"{name}\n\n{response}")
-    print(f"  Saved to: {destination}")
+
+
+def log_complete(index, company, model):
+    ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(f"[{ts}] Layer {index} complete — {company} ({model})")
 
 
 def run_layer(index, extra_prompt=""):
@@ -92,9 +97,9 @@ def run_recursive_group(start_index):
             idx, company, model, response = run_layer(idx, extra_prompt=extra)
             label = f"Loop {loop_num} | Layer {idx} | {layers[idx].output_name}"
 
-            print(f"    [Layer {idx}] Response: {response}")
             save_output(idx, response)
             append_to_conversation(conversation_path, label, response)
+            log_complete(idx, company, model)
 
     print(f"\n  [Recursive Group] Complete. Conversation saved to: {conversation_path}\n")
     return len(group_indices)
@@ -124,8 +129,8 @@ def main():
         if len(group) == 1:
             # Single layer — run directly, no threading overhead
             idx, company, model, response = run_layer(group[0])
-            print(f"  Response: {response}")
             save_output(idx, response)
+            log_complete(idx, company, model)
         else:
             # Multiple layers — run concurrently
             results = {}
@@ -137,8 +142,8 @@ def main():
             # Print results in layer order
             for idx in group:
                 company, model, response = results[idx]
-                print(f"  [Layer {idx}] Response: {response}")
                 save_output(idx, response)
+                log_complete(idx, company, model)
 
         pending_layer += len(group)
 
