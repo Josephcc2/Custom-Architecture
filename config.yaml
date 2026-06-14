@@ -1,7 +1,13 @@
 ai_models:
   - company: OpenAI
     model: gpt-4o-mini
+    max_tokens: 4096
+    persona: You are a helpful assistant.
   - company: Anthropic
     model: claude-haiku-4-5
+    max_tokens: 4096
+    persona: You are a helpful assistant.
   - company: xAI
     model: grok-4-1-fast-reasoning
+    max_tokens: 4096
+    persona: You are a helpful assistant.
