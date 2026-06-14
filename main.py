@@ -11,22 +11,37 @@ with open("config.yaml", "r") as f:
 ai_models = config["ai_models"]
 
 class Layer:
-    def __init__(self, parallel_to_next_layer, model_number):
+    def __init__(self, parallel_to_next_layer, model_number, prompt, output_destination, output_name, input_destinations=None):
         self.parallel_to_next_layer = parallel_to_next_layer
         self.model_number = model_number
+        self.prompt = prompt
+        self.output_destination = output_destination
+        self.output_name = output_name
+        self.input_destinations = input_destinations if input_destinations is not None else []
 
 layers = [
     Layer(
         True,
-        0
+        0,
+        "Rank the 5 most influential scientists of history in order. Do not send any other messages, just the ranking.",
+        "outputs/layer_0.txt",
+        "ChatGPT's 5 Most Influential Scientists"
     ),
     Layer(
         False,
-        1
+        2,
+        "Rank the 5 most influential scientists of history in order. Do not send any other messages, just the ranking.",
+        "outputs/layer_1.txt",
+        "Grok's 5 Most Influential Scientists"
     ),
     Layer(
         False,
-        2
+        1,
+        ("Given 2 lists of others' 5 most influential scientists ranked in order, "
+         "give your opinion on the current ranking."),
+        "outputs/layer_2.txt",
+        "Claude's Synthesized List of the 5 Most Influential Scientists",
+        input_destinations=["outputs/layer_0.txt", "outputs/layer_1.txt"]
     )
 ]
 
@@ -83,17 +98,31 @@ def PromptLayer(company, model, prompt):
         raise ValueError(f"Unknown company: {company}")
 
 
-# ----- Temporary Test Prompt -----
-TEST_PROMPT = "Say hello and tell me what model you are in one sentence."
-
-
 # ----- Go Through Each Layer -----
+def save_output(index, response):
+    destination = layers[index].output_destination
+    name = layers[index].output_name
+    os.makedirs(os.path.dirname(destination), exist_ok=True)
+    with open(destination, "w", encoding="utf-8") as f:
+        f.write(f"{name}\n\n{response}")
+    print(f"  Saved to: {destination}")
+
 def run_layer(index):
     entry = ai_models[layers[index].model_number]
     company = entry["company"]
     model = entry["model"]
+    prompt = layers[index].prompt
+
+    # Prepend any input files to the prompt
+    input_sections = []
+    for path in layers[index].input_destinations:
+        with open(path, "r", encoding="utf-8") as f:
+            input_sections.append(f.read())
+    if input_sections:
+        prompt = prompt + "\n\n" + "\n\n".join(input_sections)
+
     print(f"[Layer {index}] Prompting {company} ({model})...")
-    response = PromptLayer(company, model, TEST_PROMPT)
+    response = PromptLayer(company, model, prompt)
     return index, company, model, response
 
 
@@ -114,6 +143,7 @@ while pending_layer < len(layers):
         # Single layer — run directly, no threading overhead
         idx, company, model, response = run_layer(group[0])
         print(f"  Response: {response}")
+        save_output(idx, response)
     else:
         # Multiple layers — run concurrently
         results = {}
@@ -126,5 +156,6 @@ while pending_layer < len(layers):
         for idx in group:
             company, model, response = results[idx]
             print(f"  [Layer {idx}] Response: {response}")
+            save_output(idx, response)
 
     pending_layer += len(group)
