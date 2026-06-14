@@ -31,7 +31,7 @@ set XAI_API_KEY=your_api_key_here
 Layers can be edited in `layers.py`.
 
 Layers dictate the architecture for the agents. Layers have the following variables:
-- `parallel_to_next_layer`(bool) Decides if to run the next layer in sync with current layer. Can stack among multiple layers.
+- `parallel_to_next_layer`(bool) Decides if to run the next layer in sync with current layer. Can stack among multiple layers. Does not work with recursion.
 - `model_number`(int) Which LLM to use from `config.yaml`. 0 correlates to the first model, 1 to the second, and so on.
 - `prompt`(string) The prompt that the agent in that layer receives.
 - `output_destination`(string) File path to store agent's output.
