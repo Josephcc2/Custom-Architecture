@@ -40,9 +40,9 @@ Layers dictate the architecture for the agents. Layers have the following variab
 
 **Recursion**
 
-- `recursive_loops`(int) how many times the loop group repeats. 1 = no looping (normal behavior)
-- `recursive_depth`(int) how many additional layers after this one are included in the loop group.
-- `conversation_output` File path where the full agent conversation is appended to each loop. Ignoted when `recursive_loops` == 1
+- `recursive_loops`(int) How many times the loop group repeats. 1 = no looping (normal behavior). Used to repeat multiple layers before moving on.
+- `recursive_depth`(int) How many additional layers after this one are included in the loop group. A value of `1` mean that the current layer and the next are in the loop, a value of `2` means that there are a total of 3 layers in the loop.
+- `conversation_output` File path where the full agent conversation is appended to each loop. Ignored when `recursive_loops` == 1. Agents recieve the conversation when in a loop.
 
 ---
 LLMs can be modified in `config.yaml`.
