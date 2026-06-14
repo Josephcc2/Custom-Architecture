@@ -29,19 +29,22 @@ set XAI_API_KEY=your_api_key_here
 ## Configuration
 
 ### `config.yaml`
-Defines the available AI models by index. Each entry has three fields:
+Defines the available AI models by index. Each entry has four fields:
 
 ```yaml
 ai_models:
   - company: OpenAI       # index 0
     model: gpt-4o-mini
     max_tokens: 4096
+    persona: You are a helpful assistant.
   - company: Anthropic    # index 1
     model: claude-haiku-4-5
     max_tokens: 4096
+    persona: You are a helpful assistant.
   - company: xAI          # index 2
     model: grok-4-1-fast-reasoning
     max_tokens: 4096
+    persona: You are a helpful assistant.
 ```
 
 Built-in support exists for `OpenAI`, `Anthropic`, and `xAI`. Support for other providers (e.g. Gemini) can be added in `clients.py`.
