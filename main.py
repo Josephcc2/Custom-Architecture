@@ -1,8 +1,9 @@
 import os
 import yaml
-from openai import OpenAI
-import anthropic
 from concurrent.futures import ThreadPoolExecutor, as_completed
+
+from clients import PromptLayer
+from layers import layers
 
 # ----- Setup -----
 with open("config.yaml", "r") as f:
@@ -10,95 +11,8 @@ with open("config.yaml", "r") as f:
 
 ai_models = config["ai_models"]
 
-class Layer:
-    def __init__(self, parallel_to_next_layer, model_number, prompt, output_destination, output_name, input_destinations=None):
-        self.parallel_to_next_layer = parallel_to_next_layer
-        self.model_number = model_number
-        self.prompt = prompt
-        self.output_destination = output_destination
-        self.output_name = output_name
-        self.input_destinations = input_destinations if input_destinations is not None else []
 
-layers = [
-    Layer(
-        True,
-        0,
-        "Rank the 5 most influential scientists of history in order. Do not send any other messages, just the ranking.",
-        "outputs/layer_0.txt",
-        "ChatGPT's 5 Most Influential Scientists"
-    ),
-    Layer(
-        False,
-        2,
-        "Rank the 5 most influential scientists of history in order. Do not send any other messages, just the ranking.",
-        "outputs/layer_1.txt",
-        "Grok's 5 Most Influential Scientists"
-    ),
-    Layer(
-        False,
-        1,
-        ("Given 2 lists of others' 5 most influential scientists ranked in order, "
-         "give your opinion on the current ranking."),
-        "outputs/layer_2.txt",
-        "Claude's Synthesized List of the 5 Most Influential Scientists",
-        input_destinations=["outputs/layer_0.txt", "outputs/layer_1.txt"]
-    )
-]
-
-
-# ----- Clients -----
-gptClient = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-claudeClient = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
-grokClient = OpenAI(
-    api_key=os.getenv("XAI_API_KEY"),
-    base_url="https://api.x.ai/v1"
-)
-
-# Prompt OpenAI
-def GPTRespond(prompt, model):
-    response = gptClient.chat.completions.create(
-        model=model,
-        messages=[
-            {"role": "user", "content": prompt}
-        ],
-    )
-    return response.choices[0].message.content
-
-# Prompt Claude
-def ClaudeRespond(prompt, model):    
-    response = claudeClient.messages.create(
-        model=model,
-        max_tokens=1000,
-        messages=[
-            {"role": "user", "content": prompt}
-        ],
-    )
-    return response.content[0].text
-
-# Prompt Grok
-def GrokRespond(prompt, model):
-    response = grokClient.chat.completions.create(
-        model=model,
-        messages=[
-            {"role": "user", "content": prompt}
-        ],
-    )
-    return response.choices[0].message.content
-
-
-def PromptLayer(company, model, prompt):
-    company_lower = company.lower()
-    if company_lower == "openai":
-        return GPTRespond(prompt, model)
-    elif company_lower == "anthropic":
-        return ClaudeRespond(prompt, model)
-    elif company_lower == "xai":
-        return GrokRespond(prompt, model)
-    else:
-        raise ValueError(f"Unknown company: {company}")
-
-
-# ----- Go Through Each Layer -----
+# ----- Helpers -----
 def save_output(index, response):
     destination = layers[index].output_destination
     name = layers[index].output_name
@@ -107,7 +21,9 @@ def save_output(index, response):
         f.write(f"{name}\n\n{response}")
     print(f"  Saved to: {destination}")
 
-def run_layer(index):
+
+def run_layer(index, extra_prompt=""):
+    """Run a single layer. If extra_prompt is provided, it is appended to the layer's base prompt."""
     entry = ai_models[layers[index].model_number]
     company = entry["company"]
     model = entry["model"]
@@ -121,41 +37,109 @@ def run_layer(index):
     if input_sections:
         prompt = prompt + "\n\n" + "\n\n".join(input_sections)
 
+    # Append any extra context (e.g. the conversation so far from a recursive loop)
+    if extra_prompt:
+        prompt = prompt + "\n\n" + extra_prompt
+
     print(f"[Layer {index}] Prompting {company} ({model})...")
     response = PromptLayer(company, model, prompt)
     return index, company, model, response
 
 
-pending_layer = 0
-while pending_layer < len(layers):
-    # Collect a group of layers to run concurrently.
-    # A layer is part of the group if it has parallel_to_next_layer == True.
-    # The group ends (inclusively) at the first layer where parallel_to_next_layer == False.
-    group = []
-    i = pending_layer
-    while i < len(layers):
-        group.append(i)
-        if not layers[i].parallel_to_next_layer:
-            break
-        i += 1
+def append_to_conversation(conversation_path, label, response):
+    """Append a single agent turn to the shared conversation file."""
+    os.makedirs(os.path.dirname(conversation_path), exist_ok=True)
+    with open(conversation_path, "a", encoding="utf-8") as f:
+        f.write(f"--- {label} ---\n{response}\n\n")
 
-    if len(group) == 1:
-        # Single layer — run directly, no threading overhead
-        idx, company, model, response = run_layer(group[0])
-        print(f"  Response: {response}")
-        save_output(idx, response)
-    else:
-        # Multiple layers — run concurrently
-        results = {}
-        with ThreadPoolExecutor(max_workers=len(group)) as executor:
-            futures = {executor.submit(run_layer, idx): idx for idx in group}
-            for future in as_completed(futures):
-                idx, company, model, response = future.result()
-                results[idx] = (company, model, response)
-        # Print results in layer order
-        for idx in group:
-            company, model, response = results[idx]
-            print(f"  [Layer {idx}] Response: {response}")
+
+# ----- Recursive Group Runner -----
+def run_recursive_group(start_index):
+    """
+    Runs a recursive loop group starting at start_index.
+    The group spans (recursive_depth + 1) layers: [start_index, start_index + recursive_depth].
+    Each layer runs sequentially within a loop, repeated recursive_loops times.
+    All agent outputs are appended to conversation_output after each turn.
+    Returns the number of layers consumed.
+    """
+    lead = layers[start_index]
+    num_loops = lead.recursive_loops
+    depth = lead.recursive_depth
+    conversation_path = lead.conversation_output
+
+    group_indices = list(range(start_index, start_index + depth + 1))
+
+    print(f"\n[Recursive Group] Layers {group_indices}, {num_loops} loop(s), conversation → {conversation_path}\n")
+
+    # Clear / create the conversation file at the start
+    os.makedirs(os.path.dirname(conversation_path), exist_ok=True)
+    open(conversation_path, "w", encoding="utf-8").close()
+
+    for loop_num in range(1, num_loops + 1):
+        print(f"  [Loop {loop_num}/{num_loops}]")
+        for idx in group_indices:
+            # Build the conversation-so-far context to pass into this agent's prompt
+            with open(conversation_path, "r", encoding="utf-8") as f:
+                conversation_so_far = f.read().strip()
+
+            if conversation_so_far:
+                extra = f"The conversation so far:\n\n{conversation_so_far}"
+            else:
+                extra = ""
+
+            idx, company, model, response = run_layer(idx, extra_prompt=extra)
+            label = f"Loop {loop_num} | Layer {idx} | {layers[idx].output_name}"
+
+            print(f"    [Layer {idx}] Response: {response}")
             save_output(idx, response)
+            append_to_conversation(conversation_path, label, response)
 
-    pending_layer += len(group)
+    print(f"\n  [Recursive Group] Complete. Conversation saved to: {conversation_path}\n")
+    return len(group_indices)
+
+
+# ----- Main -----
+def main():
+    pending_layer = 0
+    while pending_layer < len(layers):
+        lead = layers[pending_layer]
+
+        # --- Recursive group ---
+        if lead.recursive_loops > 1:
+            consumed = run_recursive_group(pending_layer)
+            pending_layer += consumed
+            continue
+
+        # --- Normal group (parallel or single) ---
+        group = []
+        i = pending_layer
+        while i < len(layers):
+            group.append(i)
+            if not layers[i].parallel_to_next_layer:
+                break
+            i += 1
+
+        if len(group) == 1:
+            # Single layer — run directly, no threading overhead
+            idx, company, model, response = run_layer(group[0])
+            print(f"  Response: {response}")
+            save_output(idx, response)
+        else:
+            # Multiple layers — run concurrently
+            results = {}
+            with ThreadPoolExecutor(max_workers=len(group)) as executor:
+                futures = {executor.submit(run_layer, idx): idx for idx in group}
+                for future in as_completed(futures):
+                    idx, company, model, response = future.result()
+                    results[idx] = (company, model, response)
+            # Print results in layer order
+            for idx in group:
+                company, model, response = results[idx]
+                print(f"  [Layer {idx}] Response: {response}")
+                save_output(idx, response)
+
+        pending_layer += len(group)
+
+
+if __name__ == "__main__":
+    main()
