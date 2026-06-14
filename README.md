@@ -11,18 +11,6 @@ The system executes a sequence of **Layers**, each of which sends a prompt to a 
 - **Sequentially** — layers run one after another
 - **Recursively** — a group of agents loop N times, each building on a shared conversation transcript
 
-## File Structure
-
-```
-CustomArchitecture/
-├── main.py          # Orchestration engine — runs the layer pipeline
-├── clients.py       # API client setup and PromptLayer() dispatcher
-├── layer.py         # Layer class definition
-├── layers.py        # Layer pipeline definition (edit this to configure runs)
-├── config.yaml      # AI model configs (company + model per index)
-└── outputs/         # Generated output files land here (auto-created at runtime)
-```
-
 ## Setup
 Ensure you have Python latest release installed on your system.
 
