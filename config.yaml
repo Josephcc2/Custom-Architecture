@@ -1,0 +1,7 @@
+ai_models:
+  - company: OpenAI
+    model: gpt-4o-mini
+  - company: Anthropic
+    model: claude-haiku-4-5
+  - company: xAI
+    model: grok-4-1-fast-reasoning
