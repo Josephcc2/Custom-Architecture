@@ -11,10 +11,12 @@ grokClient = OpenAI(
 
 
 # Prompt OpenAI
-def GPTRespond(prompt, model):
+def GPTRespond(prompt, model, max_tokens, persona):
     response = gptClient.chat.completions.create(
         model=model,
+        max_tokens=max_tokens,
         messages=[
+            {"role": "system", "content": persona},
             {"role": "user", "content": prompt}
         ],
     )
@@ -22,10 +24,11 @@ def GPTRespond(prompt, model):
 
 
 # Prompt Claude
-def ClaudeRespond(prompt, model):
+def ClaudeRespond(prompt, model, max_tokens, persona):
     response = claudeClient.messages.create(
         model=model,
-        max_tokens=1000,
+        max_tokens=max_tokens,
+        system=persona,
         messages=[
             {"role": "user", "content": prompt}
         ],
@@ -34,23 +37,25 @@ def ClaudeRespond(prompt, model):
 
 
 # Prompt Grok
-def GrokRespond(prompt, model):
+def GrokRespond(prompt, model, max_tokens, persona):
     response = grokClient.chat.completions.create(
         model=model,
+        max_tokens=max_tokens,
         messages=[
+            {"role": "system", "content": persona},
             {"role": "user", "content": prompt}
         ],
     )
     return response.choices[0].message.content
 
 
-def PromptLayer(company, model, prompt):
+def PromptLayer(company, model, prompt, max_tokens, persona):
     company_lower = company.lower()
     if company_lower == "openai":
-        return GPTRespond(prompt, model)
+        return GPTRespond(prompt, model, max_tokens, persona)
     elif company_lower == "anthropic":
-        return ClaudeRespond(prompt, model)
+        return ClaudeRespond(prompt, model, max_tokens, persona)
     elif company_lower == "xai":
-        return GrokRespond(prompt, model)
+        return GrokRespond(prompt, model, max_tokens, persona)
     else:
         raise ValueError(f"Unknown company: {company}")
