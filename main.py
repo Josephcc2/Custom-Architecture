@@ -27,6 +27,8 @@ def run_layer(index, extra_prompt=""):
     entry = ai_models[layers[index].model_number]
     company = entry["company"]
     model = entry["model"]
+    max_tokens = entry["max_tokens"]
+    persona = entry["persona"]
     prompt = layers[index].prompt
 
     # Prepend any input files to the prompt
@@ -42,7 +44,7 @@ def run_layer(index, extra_prompt=""):
         prompt = prompt + "\n\n" + extra_prompt
 
     print(f"[Layer {index}] Prompting {company} ({model})...")
-    response = PromptLayer(company, model, prompt)
+    response = PromptLayer(company, model, prompt, max_tokens, persona)
     return index, company, model, response
 
 
