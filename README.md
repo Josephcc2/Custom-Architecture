@@ -50,6 +50,8 @@ ai_models:
     max_tokens: 4096
 ```
 
+Built-in support exists for `OpenAI`, `Anthropic`, and `xAI`. Support for other providers (e.g. Gemini) can be added in `clients.py`.
+
 ### `layers.py`
 Defines the ordered list of `Layer` objects that make up the pipeline. Edit this file to change what the agents do.
 
