@@ -3,13 +3,7 @@ Schematic to deploy agents using different LLMS with custom architectures and se
 
 Designed to be able to test different architectures for a certain goal to find the most efficient setup.
 
-## Overview
-
-The system executes a sequence of **Layers**, each of which sends a prompt to a configured AI model and saves the response to a file. Layers can run:
-
-- **In parallel** — multiple layers fire concurrently using `ThreadPoolExecutor`
-- **Sequentially** — layers run one after another
-- **Recursively** — a group of agents loop N times, each building on a shared conversation transcript
+The system executes a sequence of **Layers**, each of which sends a prompt to a configured AI model and saves the response to a file.
 
 ## Setup
 Ensure you have Python latest release installed on your system.
@@ -73,10 +67,18 @@ Defines the ordered list of `Layer` objects that make up the pipeline. All param
 
 Set `recursive_loops > 1` on the **lead layer** to create a looping agent group. The group spans `recursive_depth + 1` layers (the lead plus the next `recursive_depth` layers). Each agent in the group reads the shared conversation transcript before responding, enabling multi-turn back-and-forth between agents.
 
----
-LLMs can be modified in `config.yaml`.
+## Layer Execution Modes
 
-There is currently only built in support for ChatGPT, Claude, and Grok. This means that all of those models will work when put in the config file. Other models, such as Gemini, can have support added through `clients.py`.
+- **Sequential** — `parallel_to_next_layer=False`: layer completes before the next begins
+- **Parallel** — `parallel_to_next_layer=True`: layer runs concurrently with the next using `ThreadPoolExecutor`
+- **Recursive group** — `recursive_loops > 1` on the lead layer: a group of agents loops N times, each reading the shared conversation transcript before responding. The group spans `recursive_depth + 1` layers (the lead + the next `recursive_depth` layers).
 
-## Running the Project
-To run the project, run the `run_agents.bat` file. Outputs can be found in the fiels that they were generated to.
+## Running
+
+Double-click `run_agents.bat`, or run directly:
+
+```bash
+python main.py
+```
+
+Outputs are saved to the paths defined in each layer's `output_destination`.
