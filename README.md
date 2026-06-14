@@ -60,24 +60,6 @@ Defines the ordered list of `Layer` objects that make up the pipeline. Edit this
 
 Set `recursive_loops > 1` on the **lead layer** to create a looping agent group. The group spans `recursive_depth + 1` layers (the lead plus the next `recursive_depth` layers). Each agent in the group reads the shared conversation transcript before responding, enabling multi-turn back-and-forth between agents.
 
-
-## Customizing
-Layers can be edited in `layers.py`.
-
-Layers dictate the architecture for the agents. Layers have the following variables:
-- `parallel_to_next_layer`(bool) Decides if to run the next layer in sync with current layer. Can stack among multiple layers. Does not work with recursion.
-- `model_number`(int) Which LLM to use from `config.yaml`. 0 correlates to the first model, 1 to the second, and so on.
-- `prompt`(string) The prompt that the agent in that layer receives.
-- `output_destination`(string) File path to store agent's output.
-- `output_name`(string) Header appended to the beginning of the agent's output. Does not affect outputs.
-- `input_destination`(string[]) Optional list of file paths for inputs that the agent is given. Inputs are appended to the end of the prompt.
-
-**Recursion**
-
-- `recursive_loops`(int) How many times the loop group repeats. 1 = no looping (normal behavior). Used to repeat multiple layers before moving on.
-- `recursive_depth`(int) How many additional layers after this one are included in the loop group. A value of `1` mean that the current layer and the next are in the loop, a value of `2` means that there are a total of 3 layers in the loop.
-- `conversation_output` File path where the full agent conversation is appended to each loop. Ignored when `recursive_loops` == 1. Agents recieve the conversation when in a loop.
-
 ---
 LLMs can be modified in `config.yaml`.
 
