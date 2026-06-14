@@ -6,20 +6,25 @@ Designed to be able to test different architectures for a certain goal to find t
 ## Setup
 Ensure you have Python latest release installed on your system.
 
-First, install the SDKs for each LLM.
+First, install the SDKs for each LLM:
 
-Example:
-
+```bash
+pip install openai
+```
 ```bash
 pip install anthropic
 ```
 
-Next, set your API keys as environment variables.
-
-Example:
+Next, set your API keys as environment variables:
 
 ```bash
+set OPENAI_API_KEY=your_api_key_here
+```
+```bash
 set ANTHROPIC_API_KEY=your_api_key_here
+```
+```bash
+set XAI_API_KEY=your_api_key_here
 ```
 
 ## Customizing
