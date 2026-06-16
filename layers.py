@@ -27,7 +27,7 @@ vote_config = {
 
     # Index into ai_models (in config.yaml) for the model that synthesizes voter
     # corrections back into the output file. Only used in "pass_fail" mode.
-    "synthesizer_model": 2,
+    "synthesizer_model": 1,
 }
 
 layers = [
