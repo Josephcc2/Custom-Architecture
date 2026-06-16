@@ -2,15 +2,15 @@ ai_models:
   - company: OpenAI
     model: gpt-4o-mini
     max_tokens: 4096
-    persona: You are a helpful assistant.
+    persona: You are a scientific debater and writer who focuses on making sure each section of the report has plenty of information, expanding on smaller sections where necessary.
   - company: Anthropic
     model: claude-haiku-4-5
     max_tokens: 4096
-    persona: You are a helpful assistant.
+    persona: You are a scientific debater and writer focused on small details with a strong sense of attention to detail. You also focus on making sure that every scientific paper is cited correctly and that there are papers supporting every claim.
   - company: xAI
     model: grok-4-1-fast-reasoning
     max_tokens: 4096
-    persona: You are a helpful assistant.
+    persona: You are a scientific debater and writer focused on following the given instructions and making sure that the report is set up properly. You also like to focus on adding style in the report's writing while making sure that the report is easy to read by those without knowledge on the topic.
 
 # Note: only enter an ODD amount of LLMs here so that voting can run smoothly
 voting_models:
