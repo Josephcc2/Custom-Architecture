@@ -91,6 +91,36 @@ Defines the pipeline and the voting configuration. Three things live at the top 
 - **Parallel** — `parallel_to_next_layer=True`: layer runs concurrently with the next using `ThreadPoolExecutor`
 - **Recursive group** — `recursive_loops > 1` on the lead layer: a group of agents loops 'n' times, each reading the shared conversation transcript before responding. The group spans `recursive_depth + 1` layers (the lead + the next `recursive_depth` layers).
 
+## Voting System
+
+After all layers complete, the voting system runs automatically. All `voting_models` are prompted in parallel and each returns a verdict. The results are tallied and printed before the final output is surfaced.
+
+### `vote_config` fields
+
+| Field | Type | Description |
+|---|---|---|
+| `mode` | str | `"pass_fail"` or `"select_best"` |
+| `input_files` | list[str] | File(s) the voters read and evaluate |
+| `input_labels` | list[str] | Labels for each file in `select_best` mode (e.g. `"OUTPUT_A"`, `"OUTPUT_B"`) |
+| `synthesizer_model` | int | Index into `ai_models` for the model that applies voter corrections. Only used in `pass_fail` mode. |
+
+### Voting Modes
+
+**`pass_fail`** — voters judge a single output file against the `goal` string. Each voter responds with either `PASS` (and a brief reason) or `FAIL` (and a precise, actionable list of corrections needed). A majority of `PASS` votes causes the result to be printed to the terminal. A majority of `FAIL` votes triggers the **vote synthesis** step: all voter correction lists are compiled and sent to the `synthesizer_model`, which applies them directly to the output file. The vote then runs again on the revised output. This loop continues until the output passes.
+
+**`select_best`** — voters are given two or more output files (labeled by `input_labels`) and pick whichever best satisfies the `goal`. The most-voted label wins and that file is printed to the terminal.
+
+### Example `vote_config`
+
+```python
+vote_config = {
+    "mode": "pass_fail",
+    "input_files": ["outputs/final_report.md"],
+    "input_labels": ["OUTPUT_A", "OUTPUT_B"],  # only used in select_best mode
+    "synthesizer_model": 1,                     # index into ai_models; applies corrections on vote failure
+}
+```
+
 ## Running
 
 Double-click `run_agents.bat`, or run directly:
