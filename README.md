@@ -3,7 +3,7 @@ Schematic to deploy agents using different LLMS with custom architectures and se
 
 Designed to be able to test different architectures for a certain goal to find the most efficient setup.
 
-The system executes a sequence of **Layers**, each of which sends a prompt to a configured AI model and saves the response to a file.
+The system executes a sequence of **Layers**, each of which sends a prompt to a configured AI model and saves the response to a file. After all layers complete, a **Voting System** evaluates the output against a user-defined goal before surfacing the result.
 
 ## Setup
 Ensure you have Python latest release installed on your system.
