@@ -64,11 +64,10 @@ voting_models:
 Built-in support exists for `OpenAI`, `Anthropic`, and `xAI`. Support for other providers (e.g. Gemini) can be added in `clients.py`.
 
 ### `layers.py`
-Defines the pipeline and the voting configuration. Three things live at the top of this file:
+Defines the pipeline. Two things live at the top of this file:
 
 - **`topic`** — the subject the pipeline works on (used inside layer prompts).
 - **`goal`** — a plain English description of what the final output must satisfy for the vote to pass.
-- **`vote_config`** — a dict controlling how the post-run vote behaves (see Voting System below).
 - **`layers`** — the ordered list of `Layer` objects that make up the pipeline.
 
 ### Layer Parameters
@@ -99,6 +98,7 @@ After all layers complete, the voting system runs automatically. All `voting_mod
 
 | Field | Type | Description |
 |---|---|---|
+| `enabled` | bool | If `False`, the pipeline runs and exits without any voting or synthesis |
 | `mode` | str | `"pass_fail"` or `"select_best"` |
 | `input_files` | list[str] | File(s) the voters read and evaluate |
 | `input_labels` | list[str] | Labels for each file in `select_best` mode (e.g. `"OUTPUT_A"`, `"OUTPUT_B"`) |
@@ -112,13 +112,16 @@ After all layers complete, the voting system runs automatically. All `voting_mod
 
 ### Example `vote_config`
 
-```python
-vote_config = {
-    "mode": "pass_fail",
-    "input_files": ["outputs/final_report.md"],
-    "input_labels": ["OUTPUT_A", "OUTPUT_B"],  # only used in select_best mode
-    "synthesizer_model": 1,                     # index into ai_models; applies corrections on vote failure
-}
+```yaml
+vote_config:
+  enabled: true
+  mode: pass_fail
+  input_files:
+    - outputs/final_report.md
+  input_labels:        # only used in select_best mode
+    - OUTPUT_A
+    - OUTPUT_B
+  synthesizer_model: 1 # index into ai_models; applies corrections on vote failure
 ```
 
 ## Running
