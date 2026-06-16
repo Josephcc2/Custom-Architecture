@@ -12,6 +12,7 @@ ai_models:
     max_tokens: 4096
     persona: You are a helpful assistant.
 
+# Note: only enter an ODD amount of LLMs here so that voting can run smoothly
 voting_models:
   - company: OpenAI
     model: gpt-4o-mini
@@ -22,3 +23,29 @@ voting_models:
   - company: xAI
     model: grok-4-1-fast-reasoning
     max_tokens: 2048
+
+vote_config:
+  # Whether voting is enabled at all. If false, the pipeline runs and exits
+  # without any vote or synthesis step.
+  enabled: true
+
+  # pass_fail  → voters judge a single output against the goal. If it fails,
+  #              voters list corrections which a synthesizer merges into a
+  #              revised output, then the vote runs again.
+  # select_best → voters pick the best output from multiple candidates.
+  mode: pass_fail
+
+  # File(s) the voters will read and evaluate.
+  # For pass_fail: one file. For select_best: two or more files.
+  input_files:
+    - outputs/final_report.md
+
+  # Labels for each input file (used in select_best prompts, e.g. OUTPUT_A, OUTPUT_B).
+  # Must match the length of input_files when mode is select_best. Ignored in pass_fail.
+  input_labels:
+    - OUTPUT_A
+    - OUTPUT_B
+
+  # Index into ai_models for the model that applies voter corrections back into
+  # the output file. Only used in pass_fail mode.
+  synthesizer_model: 1
