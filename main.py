@@ -4,7 +4,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 
 from clients import PromptLayer
-from layers import layers, goal, vote_config
+from layers import layers, goal
 
 # ----- Setup -----
 with open("config.yaml", "r") as f:
@@ -12,6 +12,7 @@ with open("config.yaml", "r") as f:
 
 ai_models = config["ai_models"]
 voting_models = config["voting_models"]
+vote_config = config["vote_config"]
 
 
 # ----- Helpers -----
@@ -318,12 +319,16 @@ def run_pipeline(start_layer=0):
 
 
 def main():
+    run_pipeline(start_layer=0)
+
+    if not vote_config["enabled"]:
+        print("\n[Voting disabled. Pipeline complete.]\n")
+        return
+
     mode = vote_config["mode"]
     input_files = vote_config["input_files"]
     input_labels = vote_config["input_labels"]
     synthesizer_model = vote_config["synthesizer_model"]
-
-    run_pipeline(start_layer=0)
 
     while True:
         vote_results = run_vote(mode, goal, input_files, input_labels)
