@@ -29,7 +29,7 @@ set XAI_API_KEY=your_api_key_here
 ## Configuration
 
 ### `config.yaml`
-Defines the available AI models by index. Each entry has four fields:
+Defines two lists of models: one for the pipeline workers (`ai_models`) and one for the post-run evaluators (`voting_models`).
 
 ```yaml
 ai_models:
@@ -45,7 +45,21 @@ ai_models:
     model: grok-4-1-fast-reasoning
     max_tokens: 4096
     persona: You are a helpful assistant.
+
+voting_models:
+  - company: OpenAI
+    model: gpt-4o-mini
+    max_tokens: 1024
+  - company: Anthropic
+    model: claude-haiku-4-5
+    max_tokens: 1024
+  - company: xAI
+    model: grok-4-1-fast-reasoning
+    max_tokens: 1024
 ```
+
+`ai_models` fields: `company`, `model`, `max_tokens`, `persona`.
+`voting_models` fields: `company`, `model`, `max_tokens`. Voters use a hardcoded impartial evaluator persona — no `persona` field needed.
 
 Built-in support exists for `OpenAI`, `Anthropic`, and `xAI`. Support for other providers (e.g. Gemini) can be added in `clients.py`.
 
