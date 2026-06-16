@@ -49,13 +49,13 @@ ai_models:
 voting_models:
   - company: OpenAI
     model: gpt-4o-mini
-    max_tokens: 1024
+    max_tokens: 2048
   - company: Anthropic
     model: claude-haiku-4-5
-    max_tokens: 1024
+    max_tokens: 2048
   - company: xAI
     model: grok-4-1-fast-reasoning
-    max_tokens: 1024
+    max_tokens: 2048
 ```
 
 `ai_models` fields: `company`, `model`, `max_tokens`, `persona`.
