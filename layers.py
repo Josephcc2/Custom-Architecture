@@ -2,33 +2,12 @@ from layer import Layer
 
 topic = "Effects of caffeine on sleep"
 
-# ----- Goal & Voting Config -----
-# goal: what the final output must satisfy for the vote to pass.
+# ----- Goal -----
+# What the final output must satisfy for the vote to pass.
 goal = (
     "The final report must be at least 1000 words, cite a minimum of 5 real sources "
     "in Chicago format, and cover both short-term and long-term effects of caffeine on sleep."
 )
-
-vote_config = {
-    # "pass_fail"  → voters judge a single output against the goal.
-    #                If it passes, the output is surfaced. If it fails, voters list
-    #                corrections which a synthesizer merges into a revised output,
-    #                then the vote runs again.
-    # "select_best" → voters pick the best output from multiple candidates.
-    "mode": "pass_fail",
-
-    # File(s) the voters will read and evaluate.
-    # For "pass_fail": one file. For "select_best": two or more files.
-    "input_files": ["outputs/final_report.md"],
-
-    # Labels for each input file (used in "select_best" prompts, e.g. "OUTPUT_A", "OUTPUT_B").
-    # Must match the length of input_files when mode is "select_best". Ignored in "pass_fail".
-    "input_labels": ["OUTPUT_A", "OUTPUT_B"],
-
-    # Index into ai_models (in config.yaml) for the model that synthesizes voter
-    # corrections back into the output file. Only used in "pass_fail" mode.
-    "synthesizer_model": 1,
-}
 
 layers = [
     # Phase 1
