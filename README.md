@@ -64,7 +64,12 @@ voting_models:
 Built-in support exists for `OpenAI`, `Anthropic`, and `xAI`. Support for other providers (e.g. Gemini) can be added in `clients.py`.
 
 ### `layers.py`
-Defines the ordered list of `Layer` objects that make up the pipeline. All parameters are keyword arguments:
+Defines the pipeline and the voting configuration. Three things live at the top of this file:
+
+- **`topic`** — the subject the pipeline works on (used inside layer prompts).
+- **`goal`** — a plain English description of what the final output must satisfy for the vote to pass.
+- **`vote_config`** — a dict controlling how the post-run vote behaves (see Voting System below).
+- **`layers`** — the ordered list of `Layer` objects that make up the pipeline.
 
 ### Layer Parameters
 
