@@ -14,6 +14,8 @@ ai_models = config["ai_models"]
 voting_models = config["voting_models"]
 vote_config = config["vote_config"]
 
+start_layer = 0
+
 
 # ----- Helpers -----
 def save_output(index, response):
@@ -278,7 +280,7 @@ def run_vote_synthesis(corrections, input_file, synthesizer_model_index):
 
 
 # ----- Main -----
-def run_pipeline(start_layer=0):
+def run_pipeline():
     """Run layers starting from start_layer. Returns when all layers are complete."""
     pending_layer = start_layer
     while pending_layer < len(layers):
@@ -319,7 +321,7 @@ def run_pipeline(start_layer=0):
 
 
 def main():
-    run_pipeline(start_layer=0)
+    run_pipeline()
 
     if not vote_config["enabled"]:
         print("\n[Voting disabled. Pipeline complete.]\n")
