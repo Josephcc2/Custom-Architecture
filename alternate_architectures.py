@@ -1,5 +1,6 @@
 # This file is not used in the program, but holds other architecutres that I have built with this project
-# For each one, the `layers.py` and `config.yaml` and both provided with a short desciption of the architecture
+# For each one, the `layers.py` and `config.yaml` files are both provided with a short desciption of the architecture
+# To use, simply take the code for the layers, and paste it into your 'layers.py' file and do the same for the config
 
 # Anti-aggregation report creation
 # Generates a report on the given topic. Multiple agents work together to create the report and
