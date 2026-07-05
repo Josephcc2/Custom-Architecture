@@ -1,9 +1,19 @@
+# This file is not used in the program, but holds other architecutres that I have built with this project
+# For each one, the `layers.py` and `config.yaml` and both provided with a short desciption of the architecture
+
+# Anti-aggregation report creation
+# Generates a report on the given topic. Multiple agents work together to create the report and
+# the architecture avoids having a single LLM aggregate their responses to remove bias.
+# Instead, all 3 agents work together to create an agreed upon final report.
+# The final report can be found in outputs/final_report.md
+
+# `layers.py`
 from layer import Layer
 
 topic = "Effects of caffeine on sleep"
 
 # ----- Goal -----
-# What the final output must satisfy for the vote to pass.
+# What the final output must satisfy for the vote to pass. (not used for this architecutre)
 goal = (
     f"A final report on {topic} which must cite at least 3 real sources, use markdown "
     "and Chicago format, and be easy to understand "
@@ -470,11 +480,65 @@ layers = [
             "accessible to those with little scientific knowledge on the topic. "
             "Do your best to meet in the middle with the other LLMs."
         ),
-        output_destination="outputs/Grok/final_report.md",
-        output_name="Grok",
+        output_destination="outputs/final_report.md",
+        output_name="Final Report",
         input_destinations=[
             "outputs/ChatGPT/revised_report.md", "outputs/Claude/revised_report.md",
             "outputs/Grok/revised_report.md", "outputs/Grok/debate.md"
         ]
     )
 ]
+
+
+# `config.yaml`
+ai_models:
+  - company: OpenAI
+    model: gpt-5-nano
+    max_tokens: 8192
+    persona: You are a scientific debater and writer who focuses on making sure each section of the report has plenty of information, expanding on smaller sections where necessary.
+  - company: Anthropic
+    model: claude-haiku-4-5
+    max_tokens: 8192
+    persona: You are a scientific debater and writer focused on small details with a strong sense of attention to detail. You also focus on making sure that every scientific paper is cited correctly and that there are papers supporting every claim.
+  - company: xAI
+    model: grok-4.3
+    max_tokens: 8192
+    persona: You are a scientific debater and writer focused on following the given instructions and making sure that the report is set up properly. You also like to focus on adding style in the report's writing while making sure that the report is easy to read by those without knowledge on the topic.
+
+# Note: only enter an ODD amount of LLMs here so that voting can run smoothly
+voting_models:
+  - company: OpenAI
+    model: gpt-4o-mini
+    max_tokens: 2048
+  - company: Anthropic
+    model: claude-haiku-4-5
+    max_tokens: 4096
+  - company: xAI
+    model: grok-4.3
+    max_tokens: 8192
+
+vote_config:
+  # Whether voting is enabled at all. If false, the pipeline runs and exits
+  # without any vote or synthesis step.
+  enabled: false
+
+  # pass_fail  → voters judge a single output against the goal. If it fails,
+  #              voters list corrections which a synthesizer merges into a
+  #              revised output, then the vote runs again.
+  # select_best → voters pick the best output from multiple candidates.
+  mode: pass_fail
+
+  # File(s) the voters will read and evaluate.
+  # For pass_fail: one file. For select_best: two or more files.
+  input_files:
+    - outputs/final_report.md
+
+  # Labels for each input file (used in select_best prompts, e.g. OUTPUT_A, OUTPUT_B).
+  # Must match the length of input_files when mode is select_best. Ignored in pass_fail.
+  input_labels:
+    - OUTPUT_A
+    - OUTPUT_B
+
+  # Index into ai_models for the model that applies voter corrections back into
+  # the output file. Only used in pass_fail mode.
+  synthesizer_model: 2
