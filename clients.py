@@ -14,7 +14,7 @@ grokClient = OpenAI(
 def GPTRespond(prompt, model, max_tokens, persona):
     response = gptClient.chat.completions.create(
         model=model,
-        max_tokens=max_tokens,
+        max_completion_tokens=max_tokens,
         messages=[
             {"role": "system", "content": persona},
             {"role": "user", "content": prompt}
