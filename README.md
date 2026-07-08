@@ -26,6 +26,8 @@ set ANTHROPIC_API_KEY=your_api_key_here
 set XAI_API_KEY=your_api_key_here
 ```
 
+*If on MacOS, replace 'set' with 'export'*
+
 ## Configuration
 
 ### `config.yaml`
@@ -63,12 +65,23 @@ voting_models:
 
 Built-in support exists for `OpenAI`, `Anthropic`, and `xAI`. Support for other providers (e.g. Gemini) can be added in `clients.py`.
 
-### `layers.py`
-Defines the pipeline. Two things live at the top of this file:
+### `layers_file` (in `config.yaml`)
+Specifies which pipeline script to load at runtime. Set this to the name of any file inside the `layers/` folder, without the `.py` extension:
+
+```yaml
+layers_file: research
+```
+
+This will load `layers/research.py` as the active pipeline.
+
+### `layers/` Folder
+Contains one or more pipeline definition scripts. Each file is self-contained and must expose three module-level names:
 
 - **`topic`** — the subject the pipeline works on (used inside layer prompts).
-- **`goal`** — a plain English description of what the final output must satisfy for the vote to pass.
+- **`goal`** — a plain English description of what the final output must satisfy for the vote to pass. Only used when voting is enabled.
 - **`layers`** — the ordered list of `Layer` objects that make up the pipeline.
+
+To add a new pipeline, create a new `.py` file in the `layers/` folder with those three names defined, then update `layers_file` in `config.yaml` to match. No changes to `main.py` are needed.
 
 ### Layer Parameters
 
