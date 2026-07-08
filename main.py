@@ -1,10 +1,11 @@
 import os
+import sys
+import importlib.util
 import yaml
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 
 from clients import PromptLayer
-from layers import layers, goal
 
 # ----- Setup -----
 with open("config.yaml", "r") as f:
@@ -13,6 +14,17 @@ with open("config.yaml", "r") as f:
 ai_models = config["ai_models"]
 voting_models = config["voting_models"]
 vote_config = config["vote_config"]
+
+# Dynamically load the selected layers file from the layers/ folder
+layers_filename = config["layers_file"]
+layers_path = os.path.join("layers", f"{layers_filename}.py")
+
+spec = importlib.util.spec_from_file_location("layers_module", layers_path)
+layers_module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(layers_module)
+
+layers = layers_module.layers
+goal = layers_module.goal
 
 start_layer = 0
 
