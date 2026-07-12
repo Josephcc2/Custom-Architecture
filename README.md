@@ -75,14 +75,14 @@ layers_file: research
 This will load `layers/research.py` as the active pipeline.
 
 ### `layers/` Folder
-Contains one or more pipeline definition scripts. Each file is self-contained and must expose three module-level names:
+Contains one or more pipeline definition scripts. Each file is self-contained and must expose four module-level names:
 
-- **`topic`** — the subject the pipeline works on (used inside layer prompts).
+- **`context`** — shared background included in every agent's prompt, regardless of layer (e.g. framing the agents as collaborators in a multi-model pipeline).
+- **`task`** — the task the pipeline works on (used inside layer prompts). Unlike a short topic, this can span multiple lines or paragraphs to capture as much detail as the task needs.
 - **`goal`** — a plain English description of what the final output must satisfy for the vote to pass. Only used when voting is enabled.
 - **`layers`** — the ordered list of `Layer` objects that make up the pipeline.
 
-To add a new pipeline, create a new `.py` file in the `layers/` folder with those three names defined, then update `layers_file` in `config.yaml` to match. No changes to `main.py` are needed.
-
+To add a new pipeline, create a new `.py` file in the `layers/` folder with those four names defined, then update `layers_file` in `config.yaml` to match. No changes to `main.py` are needed.
 ### Layer Parameters
 
 | Parameter | Type | Default | Description |
