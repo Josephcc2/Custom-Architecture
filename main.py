@@ -5,7 +5,7 @@ import yaml
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 
-from clients import PromptLayer
+from clients import PromptLayer, SaveMemory, LoadMemory
 
 # ----- Setup -----
 with open("config.yaml", "r") as f:
@@ -29,6 +29,55 @@ goal = layers_module.goal
 start_layer = 0
 
 
+def validate_memory_usage():
+    """
+    Reject configurations where two layers that run in parallel (chained via
+    parallel_to_next_layer) share a model_number and at least one of them has
+    save_to_memory=True. Concurrent writes to the same in-memory messages[] history from
+    threads finishing at the same time would race — producing a history that doesn't actually
+    reflect what either call saw — and could also violate Anthropic's requirement that
+    messages strictly alternate user/assistant. Recursive groups are exempt: their layers run
+    sequentially within each loop, never concurrently.
+    """
+    pending_layer = 0
+    while pending_layer < len(layers):
+        lead = layers[pending_layer]
+
+        if lead.recursive_loops > 1:
+            pending_layer += lead.recursive_depth + 1
+            continue
+
+        group = []
+        i = pending_layer
+        while i < len(layers):
+            group.append(i)
+            if not layers[i].parallel_to_next_layer:
+                break
+            i += 1
+
+        if len(group) > 1:
+            seen = {}
+            for idx in group:
+                mn = layers[idx].model_number
+                if mn in seen:
+                    other_idx = seen[mn]
+                    if layers[idx].save_to_memory or layers[other_idx].save_to_memory:
+                        raise ValueError(
+                            f"Layers {other_idx} and {idx} run in parallel and both use "
+                            f"model_number {mn}, with save_to_memory=True on at least one of "
+                            "them. Concurrent memory writes to the same Agent aren't "
+                            "supported — disable save_to_memory on one of them, point them at "
+                            "different ai_models entries, or make them run sequentially "
+                            "(parallel_to_next_layer=False) instead."
+                        )
+                seen[mn] = idx
+
+        pending_layer += len(group)
+
+
+validate_memory_usage()
+
+
 # ----- Helpers -----
 def save_output(index, response):
     destination = layers[index].output_destination
@@ -45,7 +94,8 @@ def log_complete(index, company, model):
 
 def run_layer(index, extra_prompt=""):
     """Run a single layer. If extra_prompt is provided, it is appended to the layer's base prompt."""
-    entry = ai_models[layers[index].model_number]
+    model_number = layers[index].model_number
+    entry = ai_models[model_number]
     company = entry["company"]
     model = entry["model"]
     max_tokens = entry["max_tokens"]
@@ -64,8 +114,19 @@ def run_layer(index, extra_prompt=""):
     if extra_prompt:
         prompt = prompt + "\n\n" + extra_prompt
 
+    # This Agent's (ai_models[model_number]'s) remembered history, if any — passed as real
+    # conversation turns so the model sees its own past prompts/responses directly, rather
+    # than text appended into this prompt.
+    history = LoadMemory(model_number)
+
     print(f"[Layer {index}] Prompting {company} ({model})...")
-    response = PromptLayer(company, model, prompt, max_tokens, persona)
+    response = PromptLayer(company, model, prompt, max_tokens, persona, history=history)
+
+    # Persist exactly what was sent and what came back to the Agent's memory (this run only),
+    # if this layer opts in
+    if layers[index].save_to_memory:
+        SaveMemory(company, model_number, prompt, response)
+
     return index, company, model, response
 
 
