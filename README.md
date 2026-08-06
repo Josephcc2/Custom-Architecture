@@ -98,12 +98,27 @@ To add a new pipeline, create a new `.py` file in the `layers/` folder with thos
 | `recursive_loops` | int | `1` | How many times the loop group repeats (1 = no looping) |
 | `recursive_depth` | int | `1` | How many additional layers follow this one in the loop group |
 | `conversation_output` | str | `None` | Shared conversation transcript file path (recursive groups only) |
+| `save_to_memory` | bool | `False` | If `True`, this layer's prompt/response are appended to its Agent's in-memory `messages[]` history (see [Agent Memory](#agent-memory)) |
 
 ## Layer Execution Modes
 
 - **Sequential** — `parallel_to_next_layer=False`: layer completes before the next begins
 - **Parallel** — `parallel_to_next_layer=True`: layer runs concurrently with the next using `ThreadPoolExecutor`
 - **Recursive group** — `recursive_loops > 1` on the lead layer: a group of agents loops 'n' times, each reading the shared conversation transcript before responding. The group spans `recursive_depth + 1` layers (the lead + the next `recursive_depth` layers).
+
+## Agent Memory
+
+Each **Agent** — a specific entry in `ai_models` in `config.yaml`, identified by its index (`model_number`) — can build up a memory of its own past prompts and responses, expressed as a real `messages[]` history of alternating `user`/`assistant` turns rather than text pasted into the prompt.
+
+- Set `save_to_memory=True` on a layer to have that layer's prompt and the model's response appended to its Agent's history once the layer completes.
+- Memory is tied to the **Agent** (`ai_models[model_number]`), not the individual layer. Any layer using that same `model_number` automatically has that history prepended to its own call — even if that later layer's own `save_to_memory` is `False`.
+- Memory is **in-memory only** for the current run — it is not written to disk and does not survive between separate runs of `main.py`. Every fresh run starts with each Agent's memory empty.
+- There is **no cap** on how many turns accumulate — every saved turn is resent to the model on every later call to that Agent, so prompt size (and cost) grows the more turns a given Agent has saved.
+- **Parallel layers may not share a memory-enabled Agent.** If two layers chained via `parallel_to_next_layer` use the same `model_number` and at least one has `save_to_memory=True`, `main.py` raises a `ValueError` on startup, before any layer runs — concurrent writes to the same in-memory history would race and could also violate Anthropic's requirement that `messages` strictly alternate `user`/`assistant`. Disable `save_to_memory` on one of them, point them at different `ai_models` entries, or make them run sequentially instead.
+
+This is implemented in `clients.py`:
+- `SaveMemory(company, model_number, prompt, response)` — routes to that company's save function (`GPTSaveMemory`, `ClaudeSaveMemory`, or `GrokSaveMemory`, mirroring how `PromptLayer` routes prompts), which appends a `user`/`assistant` pair to that Agent's history.
+- `LoadMemory(model_number)` — returns that Agent's messages history (a list of `{"role": ..., "content": ...}` dicts), which `main.py` passes into `PromptLayer` as `history` so it's prepended ahead of the current prompt on the next call.
 
 ## Voting System
 
