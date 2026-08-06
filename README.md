@@ -8,7 +8,9 @@ The system executes a sequence of **Layers**, each of which sends a prompt to a 
 ## Setup
 Ensure you have Python latest release installed on your system.
 
-First, install dependencies:
+Next, click `Code <>` then press download ZIP and unzip the folder.
+
+Then, install dependencies:
 
 ```bash
 pip install anthropic openai pyyaml
